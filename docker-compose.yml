@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.backend
+    container_name: trazor-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - SESSION_SECRET=${SESSION_SECRET}
+      - FRONTEND_URL=https://trazor.cloud
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=https://trazor.cloud/auth/google/callback
+      - ALLOWED_ADMIN_EMAILS=${ALLOWED_ADMIN_EMAILS}
+      - MAX_FILE_SIZE=10485760
+      - ALLOWED_FILE_TYPES=image/jpeg,image/png,image/webp,image/gif
+    volumes:
+      - backend_data:/app/data
+      - backend_uploads:/app/uploads
+    networks:
+      - trazor-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5001/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend
+    container_name: trazor-frontend
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=https://trazor.cloud
+      - VITE_GA_TRACKING_ID=${VITE_GA_TRACKING_ID}
+    networks:
+      - trazor-network
+    depends_on:
+      - backend
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: trazor-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - web-root:/var/www/html
+    networks:
+      - trazor-network
+    depends_on:
+      - frontend
+      - backend
+
+  # Certbot for SSL certificates
+  certbot:
+    image: certbot/certbot
+    container_name: trazor-certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - web-root:/var/www/html
+    command: certonly --webroot --webroot-path=/var/www/html --email ${CERTBOT_EMAIL} --agree-tos --no-eff-email -d trazor.cloud
+
+volumes:
+  backend_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  certbot-etc:
+    driver: local
+  certbot-var:
+    driver: local
+  web-root:
+    driver: local
+
+networks:
+  trazor-network:
+    driver: bridge
