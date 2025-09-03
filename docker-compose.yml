@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Backend API Service
   backend:
@@ -36,11 +34,11 @@ services:
     build:
       context: ./frontend
       dockerfile: ../Dockerfile.frontend
+      args:
+        - VITE_API_URL=https://trazor.cloud
+        - VITE_GA_TRACKING_ID=${VITE_GA_TRACKING_ID}
     container_name: trazor-frontend
     restart: unless-stopped
-    environment:
-      - VITE_API_URL=https://trazor.cloud
-      - VITE_GA_TRACKING_ID=${VITE_GA_TRACKING_ID}
     networks:
       - trazor-network
     depends_on:
@@ -60,11 +58,17 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - web-root:/var/www/html
+      - ./logs/nginx:/var/log/nginx
     networks:
       - trazor-network
     depends_on:
       - frontend
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t && [ -s /var/run/nginx.pid ]"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   # Certbot for SSL certificates
   certbot:
@@ -74,7 +78,7 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - web-root:/var/www/html
-    command: certonly --webroot --webroot-path=/var/www/html --email ${CERTBOT_EMAIL} --agree-tos --no-eff-email -d trazor.cloud
+    command: certonly --webroot --webroot-path=/var/www/html --email ${CERTBOT_EMAIL} --agree-tos --no-eff-email -d trazor.cloud -d www.trazor.cloud
 
 volumes:
   backend_data:

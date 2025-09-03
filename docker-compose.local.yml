@@ -1,0 +1,64 @@
+# Local Development Docker Compose
+# This version works without SSL certificates for local testing
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.backend
+    container_name: trazor-backend-local
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - backend_data:/app/data
+      - backend_uploads:/app/uploads
+    networks:
+      - trazor-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5001/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend
+    container_name: trazor-frontend-local
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - trazor-network
+    depends_on:
+      - backend
+
+  # Nginx Reverse Proxy (Local Development)
+  nginx:
+    image: nginx:alpine
+    container_name: trazor-nginx-local
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d/localhost.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - trazor-network
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  backend_data:
+    driver: local
+  backend_uploads:
+    driver: local
+
+networks:
+  trazor-network:
+    driver: bridge

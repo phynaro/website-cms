@@ -12,7 +12,7 @@
         "originalname": "IMG_3503-1024x575.jpg",
         "mimetype": "image/jpeg",
         "size": 87532,
-        "url": "https://your-production-domain.com/uploads/blog-1756841460254-506391317.jpg",
+        "url": "http://localhost/uploads/blog-1756841460254-506391317.jpg",
         "uploadedAt": "2025-09-02T19:31:00.259Z"
       },
       {
@@ -20,7 +20,7 @@
         "originalname": "LINE_ALBUM_à¸ªà¸±à¸¡à¸¡à¸à¸²à¹à¸à¸µà¸¢à¸à¹à¸«à¸¡à¹_à¹à¹à¹à¹à¹à¹_1-600x450.jpg",
         "mimetype": "image/jpeg",
         "size": 54514,
-        "url": "https://your-production-domain.com/uploads/blog-1756841460256-359670895.jpg",
+        "url": "http://localhost/uploads/blog-1756841460256-359670895.jpg",
         "uploadedAt": "2025-09-02T19:31:00.260Z"
       }
     ],
@@ -40,7 +40,7 @@
         "originalname": "429864468_812837207548932_3741511556596271259_n-1-600x400.jpg",
         "mimetype": "image/jpeg",
         "size": 55805,
-        "url": "https://your-production-domain.com/uploads/blog-1756840800383-389852691.jpg",
+        "url": "http://localhost/uploads/blog-1756840800383-389852691.jpg",
         "uploadedAt": "2025-09-02T19:20:00.388Z"
       },
       {
@@ -48,7 +48,7 @@
         "originalname": "hhr5ttt-1536x1024.jpg",
         "mimetype": "image/jpeg",
         "size": 228860,
-        "url": "https://your-production-domain.com/uploads/blog-1756840800384-767013961.jpg",
+        "url": "http://localhost/uploads/blog-1756840800384-767013961.jpg",
         "uploadedAt": "2025-09-02T19:20:00.388Z"
       }
     ],
