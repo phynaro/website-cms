@@ -14,7 +14,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       // Check if user's email is in the allowed admin emails list
       const allowedEmails = process.env.ALLOWED_ADMIN_EMAILS?.split(',') || [];
       const userEmail = profile.emails?.[0]?.value;
-
+      console.log(profile);
       if (!userEmail || !allowedEmails.includes(userEmail)) {
         return done(null, false, { 
           message: 'Access denied. Your email is not authorized.' 

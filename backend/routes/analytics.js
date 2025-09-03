@@ -9,20 +9,55 @@ const router = express.Router();
 // Google Analytics configuration
 const CREDENTIALS_PATH = path.join(__dirname, '../credentials/analytics-credentials.json');
 
-// Initialize Google Analytics Data Client
+// Initialize Google Analytics Data Client with secure credential handling
 const initializeAnalytics = () => {
   try {
-    if (!fs.existsSync(CREDENTIALS_PATH)) {
-      console.error('Analytics credentials file not found at:', CREDENTIALS_PATH);
-      return null;
+    let credentials;
+    
+    // Try environment variable first (most secure)
+    if (process.env.GOOGLE_ANALYTICS_CREDENTIALS) {
+      try {
+        credentials = JSON.parse(process.env.GOOGLE_ANALYTICS_CREDENTIALS);
+        console.log('Using Google Analytics credentials from environment variable');
+      } catch (parseError) {
+        console.error('Failed to parse GOOGLE_ANALYTICS_CREDENTIALS:', parseError);
+        return null;
+      }
+    } else if (process.env.GOOGLE_ANALYTICS_CREDENTIALS_PATH) {
+      // Fallback to file path
+      const credentialsPath = process.env.GOOGLE_ANALYTICS_CREDENTIALS_PATH;
+      if (!fs.existsSync(credentialsPath)) {
+        console.error('Google Analytics credentials file not found at:', credentialsPath);
+        return null;
+      }
+      try {
+        credentials = JSON.parse(fs.readFileSync(credentialsPath, 'utf8'));
+        console.log('Using Google Analytics credentials from file:', credentialsPath);
+      } catch (readError) {
+        console.error('Failed to read Google Analytics credentials file:', readError);
+        return null;
+      }
+    } else {
+      // Legacy fallback (deprecated - for backward compatibility)
+      const legacyCredentialsPath = path.join(__dirname, '../credentials/analytics-credentials.json');
+      if (fs.existsSync(legacyCredentialsPath)) {
+        console.warn('WARNING: Using legacy credentials file. Please migrate to environment variables for security.');
+        try {
+          credentials = JSON.parse(fs.readFileSync(legacyCredentialsPath, 'utf8'));
+          console.log('Using legacy Google Analytics credentials file');
+        } catch (readError) {
+          console.error('Failed to read legacy credentials file:', readError);
+          return null;
+        }
+      } else {
+        console.error('No Google Analytics credentials configured. Please set GOOGLE_ANALYTICS_CREDENTIALS or GOOGLE_ANALYTICS_CREDENTIALS_PATH');
+        return null;
+      }
     }
-
-    // Set the GOOGLE_APPLICATION_CREDENTIALS environment variable
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = CREDENTIALS_PATH;
     
     // Initialize the Google Analytics Data Client
     const analyticsDataClient = new BetaAnalyticsDataClient({
-      keyFilename: CREDENTIALS_PATH
+      credentials: credentials
     });
     
     console.log('Google Analytics Data Client initialized successfully');
@@ -174,6 +209,52 @@ router.get('/realtime', isAdmin, async (req, res) => {
     res.status(500).json({
       error: 'Failed to fetch real-time data',
       details: error.message,
+    });
+  }
+});
+
+// Health check endpoint for Google Analytics
+router.get('/health', isAdmin, async (req, res) => {
+  try {
+    const analyticsDataClient = initializeAnalytics();
+    const propertyId = process.env.GA_PROPERTY_ID;
+
+    if (!analyticsDataClient) {
+      return res.status(503).json({ 
+        status: 'unhealthy', 
+        error: 'Analytics client not initialized',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (!propertyId) {
+      return res.status(503).json({ 
+        status: 'unhealthy', 
+        error: 'GA_PROPERTY_ID not configured',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Test connection with a minimal query
+    await analyticsDataClient.runReport({
+      property: `properties/${propertyId}`,
+      dateRanges: [{ startDate: 'today', endDate: 'today' }],
+      metrics: [{ name: 'screenPageViews' }],
+      limit: 1
+    });
+    
+    res.json({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      propertyId: propertyId,
+      message: 'Google Analytics connection successful'
+    });
+  } catch (error) {
+    console.error('Google Analytics health check failed:', error);
+    res.status(503).json({ 
+      status: 'unhealthy', 
+      error: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 });

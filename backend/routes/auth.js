@@ -31,6 +31,7 @@ router.get('/google/callback',
     })(req, res, next);
   },
   (req, res) => {
+
     // Successful authentication, redirect to frontend
     res.redirect(`${process.env.FRONTEND_URL}/admin`);
   }

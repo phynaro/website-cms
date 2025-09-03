@@ -11,6 +11,10 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      # Override any environment variables for local development
+      - NODE_ENV=development
+      - PORT=5001
     volumes:
       - backend_data:/app/data
       - backend_uploads:/app/uploads

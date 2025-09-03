@@ -9,8 +9,11 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci --only=production
 
-# Copy application code
+# Copy application code (excluding credentials)
 COPY . .
+
+# Remove credentials directory for security (credentials should be passed via environment variables)
+RUN rm -rf credentials/ || true
 
 # Create uploads directory
 RUN mkdir -p uploads

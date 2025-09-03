@@ -5,6 +5,17 @@ frontend/.env
 frontend/.env.*
 backend/.env.*
 
+# Credentials and sensitive files
+backend/credentials/
+credentials/
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!tailwind.config.js
+!postcss.config.js
+!vite.config.js
+
 # Logs
 logs/
 *.log

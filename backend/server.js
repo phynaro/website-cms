@@ -18,6 +18,9 @@ const blogRoutes = require('./routes/blog');
 const uploadRoutes = require('./routes/upload');
 const analyticsRoutes = require('./routes/analytics');
 
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
 // Middleware
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
